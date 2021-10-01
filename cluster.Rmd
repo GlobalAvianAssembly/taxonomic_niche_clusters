@@ -245,6 +245,6 @@ plot_output('cluster_score6', rho6, delta6)
 ```
 
 ```{r}
-write_csv(taxonomy[,c("cluster1", "cluster2", "cluster3")], "result.csv")
+write_csv(taxonomy[,c("scientific_name", "cluster1", "cluster2", "cluster3")], "result.csv")
 ```
 
