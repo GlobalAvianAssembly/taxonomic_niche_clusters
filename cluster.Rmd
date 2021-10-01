@@ -1,0 +1,250 @@
+---
+title: "Cluster global bird population based on traits"
+output: html_notebook
+---
+
+Clear workspace
+```{r}
+rm(list = ls())
+```
+
+Unload packages
+```{r}
+tryCatch({
+  invisible(lapply(paste0("package:", names(sessionInfo()$otherPkgs)),   # Unload add-on packages
+                 detach,
+                 character.only = TRUE, unload = TRUE))
+})
+```
+
+```{r}
+library(tidyverse)
+library(densityClust)
+```
+
+
+```{r}
+taxonomy <- read_csv("taxonomy.csv")
+```
+
+
+```{r}
+rho1 = 1
+rho2 = 1
+rho3 = 1
+rho4 = 0.5
+rho5 = 0.5
+rho6 = 0.5
+
+delta1 = 0.5
+delta2 = 0.3
+delta3 = 0.25
+delta4 = 0.5
+delta5 = 0.3
+delta6 = 0.25
+```
+
+```{r}
+distribution <- dist(taxonomy[,c("pc1", "pc2", "pc3", "pc4")])
+clustered <- densityClust(distribution, gaussian=TRUE)
+plot(clustered)
+```
+
+
+```{r}
+cluster1 <- findClusters(clustered, rho=rho1, delta = delta1)
+cluster2 <- findClusters(clustered, rho=rho2, delta = delta2)
+cluster3 <- findClusters(clustered, rho=rho3, delta = delta3)
+cluster4 <- findClusters(clustered, rho=rho4, delta = delta4)
+cluster5 <- findClusters(clustered, rho=rho5, delta = delta5)
+cluster6 <- findClusters(clustered, rho=rho6, delta = delta6)
+```
+
+
+```{r}
+taxonomy$cluster1 <- cluster1$clusters
+taxonomy$cluster2 <- cluster2$clusters
+taxonomy$cluster3 <- cluster3$clusters
+taxonomy$cluster4 <- cluster4$clusters
+taxonomy$cluster5 <- cluster5$clusters
+taxonomy$cluster6 <- cluster6$clusters
+```
+
+```{r}
+report_clusters <- function(pool) {
+  c(nrow(unique(pool[,c('cluster1')])), nrow(unique(pool[,c('cluster2')])), nrow(unique(pool[,c('cluster3')])), nrow(unique(pool[,c('cluster4')])), nrow(unique(pool[,c('cluster5')])), nrow(unique(pool[,c('cluster6')])))
+}
+
+report_clusters2 <- function(pool) {
+  c(length(unique(pool[,c('cluster1')])), length(unique(pool[,c('cluster2')])), length(unique(pool[,c('cluster3')])), length(unique(pool[,c('cluster4')])), length(unique(pool[,c('cluster5')])), length(unique(pool[,c('cluster6')])))
+}
+```
+
+```{r}
+report_clusters(taxonomy)
+```
+
+###########################
+ Test it out
+###########################
+
+```{r}
+assign_clusters <- function(species) {
+  left_join(species, taxonomy)
+}
+```
+
+```{r}
+london <- read_csv("test_data_london.csv")
+london <- assign_clusters(london)
+report_clusters(london)
+report_clusters(london) / report_clusters(taxonomy)
+```
+
+```{r}
+test_locality_species_data <- read_csv('test_data_all_localities.csv')
+```
+```{r}
+london_test_localities <- unique(test_locality_species_data[test_locality_species_data$name == 'London', c("locality_id", "f0_")])
+london_test_localities
+```
+```{r}
+locality <- data.frame(test_locality_species_data[test_locality_species_data$locality_id == 'L10042193',])
+locality <- assign_clusters(locality)
+
+locality
+
+locality_clusters <- report_clusters2(locality)
+
+locality_clusters
+
+cluster_scores = locality_clusters / report_clusters(london)
+
+cluster_scores
+```
+
+```{r}
+locallity_cluster_scores <- function(test_localities, regional_pool_clusters) {
+  test_localities$cluster_score1 <- 0
+  test_localities$cluster_score2 <- 0
+  test_localities$cluster_score3 <- 0
+  test_localities$cluster_score4 <- 0
+  test_localities$cluster_score5 <- 0
+  test_localities$cluster_score6 <- 0
+  
+  for (row in 1:nrow(test_localities)) {
+    locality_id <- test_localities[row, "locality_id"]$locality_id
+    locality <- data.frame(test_locality_species_data[test_locality_species_data$locality_id == locality_id,])
+    locality <- assign_clusters(locality)
+    locality_clusters <- report_clusters2(locality)
+    
+    cluster_scores = locality_clusters / regional_pool_clusters
+    
+    test_localities$cluster_score1[row] <- cluster_scores[1]
+    test_localities$cluster_score2[row] <- cluster_scores[2]
+    test_localities$cluster_score3[row] <- cluster_scores[3]
+    test_localities$cluster_score4[row] <- cluster_scores[4]
+    test_localities$cluster_score5[row] <- cluster_scores[5]
+    test_localities$cluster_score6[row] <- cluster_scores[6]
+  }
+  
+  test_localities
+}
+```
+
+
+```{r}
+london_scores <- locallity_cluster_scores(london_test_localities, report_clusters(london))
+london_scores
+```
+
+```{r}
+colombo <- read_csv("test_data_colombo.csv")
+colombo <- assign_clusters(colombo)
+report_clusters(colombo)
+report_clusters(colombo) / report_clusters(taxonomy)
+```
+
+```{r}
+colombo_test_localities <- unique(test_locality_species_data[test_locality_species_data$name == 'Colombo', c("locality_id", "f0_")])
+colombo_scores <- locallity_cluster_scores(colombo_test_localities, report_clusters(colombo))
+colombo_scores
+```
+
+```{r}
+bogota <- read_csv("test_data_bogota.csv")
+bogota <- assign_clusters(bogota)
+bogota_test_localities <- unique(test_locality_species_data[test_locality_species_data$name == 'Bogota', c("locality_id", "f0_")])
+bogota_scores <- locallity_cluster_scores(bogota_test_localities, report_clusters(bogota))
+bogota_scores
+```
+
+```{r}
+unique(test_locality_species_data$name)
+```
+
+```{r}
+bangaluru <- read_csv("test_data_bangaluru.csv")
+bangaluru <- assign_clusters(bangaluru)
+bangaluru_test_localities <- unique(test_locality_species_data[test_locality_species_data$name == 'Bengaluru', c("locality_id", "f0_")])
+bangaluru_scores <- locallity_cluster_scores(bangaluru_test_localities, report_clusters(bangaluru))
+bangaluru_scores
+```
+
+```{r}
+vancouver <- read_csv("test_data_vancouver.csv")
+vancouver <- assign_clusters(vancouver)
+vancouver_test_localities <- unique(test_locality_species_data[test_locality_species_data$name == 'Vancouver', c("locality_id", "f0_")])
+vancouver_scores <- locallity_cluster_scores(vancouver_test_localities, report_clusters(vancouver))
+vancouver_scores
+```
+
+
+
+```{r}
+london_scores$city = 'London'
+colombo_scores$city = 'Colombo'
+bogota_scores$city = 'Bogota'
+bangaluru_scores$city = 'Bengaluru'
+vancouver_scores$city = 'Vancouver'
+
+localities_merged <- rbind(london_scores, colombo_scores, bogota_scores, bangaluru_scores, vancouver_scores)
+localities_merged
+```
+
+```{r}
+plot_output <- function(cluster, rho, delta) {
+  ggplot(localities_merged, aes_string(x = "f0_", y = cluster, colour = "city")) + 
+         geom_point() + xlab("% SPP") + ylab("Ratio of clusters") + labs(title = paste("Clusters rho =", rho, ", delta =", delta)) +
+  xlim(0, 40) + ylim(0, 0.7)
+}
+```
+
+```{r}
+plot_output('cluster_score1', rho1, delta1)
+```
+
+```{r}
+plot_output('cluster_score2', rho2, delta2)
+```
+
+```{r}
+plot_output('cluster_score3', rho3, delta3)
+```
+
+```{r}
+plot_output('cluster_score4', rho4, delta4)
+```
+
+```{r}
+plot_output('cluster_score5', rho5, delta5)
+```
+
+```{r}
+plot_output('cluster_score6', rho6, delta6)
+```
+
+```{r}
+write_csv(taxonomy[,c("cluster1", "cluster2", "cluster3")], "result.csv")
+```
+
