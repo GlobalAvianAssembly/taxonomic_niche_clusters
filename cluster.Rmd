@@ -32,16 +32,20 @@ taxonomy <- read_csv("taxonomy.csv")
 rho1 = 1
 rho2 = 1
 rho3 = 1
-rho4 = 0.5
+rho4 = 1
 rho5 = 0.5
 rho6 = 0.5
+rho7 = 0.5
+rho8 = 0.5
 
 delta1 = 0.5
 delta2 = 0.3
 delta3 = 0.25
-delta4 = 0.5
-delta5 = 0.3
-delta6 = 0.25
+delta4 = 0.2
+delta5 = 0.5
+delta6 = 0.3
+delta7 = 0.25
+delta8 = 0.2
 ```
 
 ```{r}
@@ -58,6 +62,8 @@ cluster3 <- findClusters(clustered, rho=rho3, delta = delta3)
 cluster4 <- findClusters(clustered, rho=rho4, delta = delta4)
 cluster5 <- findClusters(clustered, rho=rho5, delta = delta5)
 cluster6 <- findClusters(clustered, rho=rho6, delta = delta6)
+cluster7 <- findClusters(clustered, rho=rho7, delta = delta7)
+cluster8 <- findClusters(clustered, rho=rho8, delta = delta8)
 ```
 
 
@@ -68,15 +74,17 @@ taxonomy$cluster3 <- cluster3$clusters
 taxonomy$cluster4 <- cluster4$clusters
 taxonomy$cluster5 <- cluster5$clusters
 taxonomy$cluster6 <- cluster6$clusters
+taxonomy$cluster7 <- cluster7$clusters
+taxonomy$cluster8 <- cluster8$clusters
 ```
 
 ```{r}
 report_clusters <- function(pool) {
-  c(nrow(unique(pool[,c('cluster1')])), nrow(unique(pool[,c('cluster2')])), nrow(unique(pool[,c('cluster3')])), nrow(unique(pool[,c('cluster4')])), nrow(unique(pool[,c('cluster5')])), nrow(unique(pool[,c('cluster6')])))
+  c(nrow(unique(pool[,c('cluster1')])), nrow(unique(pool[,c('cluster2')])), nrow(unique(pool[,c('cluster3')])), nrow(unique(pool[,c('cluster4')])), nrow(unique(pool[,c('cluster5')])), nrow(unique(pool[,c('cluster6')])), nrow(unique(pool[,c('cluster7')])), nrow(unique(pool[,c('cluster8')])))
 }
 
 report_clusters2 <- function(pool) {
-  c(length(unique(pool[,c('cluster1')])), length(unique(pool[,c('cluster2')])), length(unique(pool[,c('cluster3')])), length(unique(pool[,c('cluster4')])), length(unique(pool[,c('cluster5')])), length(unique(pool[,c('cluster6')])))
+  c(length(unique(pool[,c('cluster1')])), length(unique(pool[,c('cluster2')])), length(unique(pool[,c('cluster3')])), length(unique(pool[,c('cluster4')])), length(unique(pool[,c('cluster5')])), length(unique(pool[,c('cluster6')])), length(unique(pool[,c('cluster7')])), length(unique(pool[,c('cluster8')])))
 }
 ```
 
@@ -131,6 +139,8 @@ locallity_cluster_scores <- function(test_localities, regional_pool_clusters) {
   test_localities$cluster_score4 <- 0
   test_localities$cluster_score5 <- 0
   test_localities$cluster_score6 <- 0
+  test_localities$cluster_score7 <- 0
+  test_localities$cluster_score8 <- 0
   
   for (row in 1:nrow(test_localities)) {
     locality_id <- test_localities[row, "locality_id"]$locality_id
@@ -146,6 +156,8 @@ locallity_cluster_scores <- function(test_localities, regional_pool_clusters) {
     test_localities$cluster_score4[row] <- cluster_scores[4]
     test_localities$cluster_score5[row] <- cluster_scores[5]
     test_localities$cluster_score6[row] <- cluster_scores[6]
+    test_localities$cluster_score7[row] <- cluster_scores[7]
+    test_localities$cluster_score8[row] <- cluster_scores[8]
   }
   
   test_localities
@@ -243,8 +255,16 @@ plot_output('cluster_score5', rho5, delta5)
 ```{r}
 plot_output('cluster_score6', rho6, delta6)
 ```
+```{r}
+plot_output('cluster_score7', rho7, delta7)
+```
 
 ```{r}
-write_csv(taxonomy[,c("scientific_name", "cluster1", "cluster2", "cluster3")], "result.csv")
+plot_output('cluster_score8', rho8, delta8)
+```
+
+
+```{r}
+write_csv(taxonomy[,c("scientific_name", "cluster1", "cluster2", "cluster3", "cluster4")], "result.csv")
 ```
 
