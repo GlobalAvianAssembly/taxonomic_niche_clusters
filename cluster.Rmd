@@ -57,6 +57,14 @@ taxonomy <- read_csv("taxonomy.csv")
 taxonomy
 ```
 
+```{r}
+library(factoextra)
+fviz_nbclust(taxonomy[,c("pc1", "pc2", "pc3", "pc4")], kmeans, method = "gap_stat")
+```
+```{r}
+fviz_nbclust(taxonomy[,c("pc1", "pc2", "pc3", "pc4")], kmeans, method = "silhouette")
+```
+
 Mouillot et al (2021)
 [The dimensionality and structure of species trait spaces]
 ----------------------------------------------------------
@@ -70,14 +78,28 @@ Measure of trait space quality:
 
 To cluster species in the trait space and potentially identify unique species, we used the ‘clustering by fast search and find of density peaks’ algorithm, which is based on initial pairwise distances and does not require dimensionality reduction (Rodriguez & Laio, 2014)
 
-
 ```{r}
-taxonomy$pc1_scaled <- rescale(taxonomy$pc1, to = c(0, 1), from = range(taxonomy$pc1, na.rm = TRUE, finite = TRUE)) * 0.83
-taxonomy$pc2_scaled <- rescale(taxonomy$pc2, to = c(0, 1), from = range(taxonomy$pc2, na.rm = TRUE, finite = TRUE)) * 0.06
-taxonomy$pc3_scaled <- rescale(taxonomy$pc3, to = c(0, 1), from = range(taxonomy$pc3, na.rm = TRUE, finite = TRUE)) * 0.04
-taxonomy$pc4_scaled <- rescale(taxonomy$pc4, to = c(0, 1), from = range(taxonomy$pc4, na.rm = TRUE, finite = TRUE)) * 0.04
+sqrt2 <- function(x) {
+  (x / abs(x)) * sqrt(abs(x))
+}
 ```
 
+```{r}
+sqrt2(2)
+sqrt2(0)
+sqrt2(-2)
+```
+
+```{r}
+taxonomy$pc1_sqrt <- sqrt2(taxonomy$pc1)
+taxonomy$pc2_sqrt <- sqrt2(taxonomy$pc2)
+taxonomy$pc3_sqrt <- sqrt2(taxonomy$pc3)
+taxonomy$pc4_sqrt <- sqrt2(taxonomy$pc4)
+```
+
+```{r}
+set.seed(123123123)
+```
 
 ```{r}
 distribution <- dist(taxonomy[,c("pc1", "pc2", "pc3", "pc4")])
@@ -93,7 +115,20 @@ clusters
 
 
 ```{r}
+clusters_half <- findClusters(clustered, rho=0.2, delta=0.6)
+clusters_half
+```
+
+```{r}
+clusters_double <- findClusters(clustered, rho=0.2, delta=0.4)
+clusters_double
+```
+
+
+```{r}
 taxonomy$cluster <- clusters$clusters
+taxonomy$cluster_half <- clusters_half$clusters
+taxonomy$cluster_double <- clusters_double$clusters
 ```
 
 
@@ -106,10 +141,10 @@ ggarrange(
   ggplot(taxonomy, aes(x = pc1, y = pc4, colour = as.factor(cluster))) + geom_point(alpha = 0.2) + theme_bw() + theme(legend.position="none") + ylab("LT + PB -> ST + SB") + xlab("Body Size"),
   ggplot(taxonomy, aes(x = pc2, y = pc4, colour = as.factor(cluster))) + geom_point(alpha = 0.2) + theme_bw() + theme(legend.position="none", axis.title.y=element_blank()) + xlab("Beak Size")
 )
-
 ```
+
 ```{r}
-results <- taxonomy[order(taxonomy$cluster, taxonomy$trophic_niche, taxonomy$foraging_niche),c("cluster", "foraging_niche", "trophic_niche", "common_name", "taxonomic_order", "scientific_name")]
+results <- taxonomy[order(taxonomy$cluster, taxonomy$trophic_niche, taxonomy$foraging_niche),c("cluster", "cluster_half", "cluster_double", "foraging_niche", "trophic_niche", "common_name", "taxonomic_order", "scientific_name")]
 results
 ```
 
@@ -229,6 +264,6 @@ ggplot(localities_merged, aes(x = f0_, y = cluster_score * 100, colour = city)) 
 
 
 ```{r}
-write_csv(taxonomy[,c("scientific_name", "cluster")], "result.csv")
+write_csv(taxonomy[,c("scientific_name", "cluster", "cluster_half", "cluster_double")], "result.csv")
 ```
 
