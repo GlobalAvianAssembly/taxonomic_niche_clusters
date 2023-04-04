@@ -1,0 +1,36 @@
+models:
+	- name: taxonomy.csv
+	  description: Taxonomic and morphology data for producing clusters
+	  columns:
+		- name: scientific_name
+		  description: The scientific name of the species
+		- name: common_name
+		  description: The common english name of the species
+		- name: taxonomic_order
+		  description: The taxonomic order of the species
+		- name: taxonomic_family
+		  description: The taxonmic family of the species
+		- name: pc1
+		  description: PCA 1st axis of species morphology; body size (84% of variation)
+		- name: pc2
+		  description: PCA 2nd axis of species morphology: beak size (6%)
+		- name: pc3
+		  description: PCA 3rd axis of species morphology: species with short tails and pointed beaks to species with long tails and stubby beaks (4%)
+		- name: pc4
+		  description: PCA 4th axis of species morphology: species with long tails and pointed beaks to species with short tails and stubby beaks (3%)
+		- name: trophic_niche
+		  description: the trophic niche classifying this species
+		- name: foraging_niche
+		  description: the foraging nche classifying this species
+	- name: taxonomic_trait_clusters.csv
+	  description: species assigned to a cluster
+	  columns:
+		- name: scientific_name
+		  description: the scientific name of the species
+		- name: cluster
+		  description: The cluster number assigned to this species for the main analysis
+		- name: cluster_half
+		  descriptionn: The cluster number assigned to this species when using half the number of clusters
+		- name: cluster_double
+		  description: The cluster number assigned to this species when using twice the number of clusters
+

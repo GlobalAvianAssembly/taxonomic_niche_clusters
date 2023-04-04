@@ -3,20 +3,6 @@ title: "Cluster global bird population based on traits"
 output: html_notebook
 ---
 
-Clear workspace
-```{r}
-rm(list = ls())
-```
-
-Unload packages
-```{r}
-tryCatch({
-  invisible(lapply(paste0("package:", names(sessionInfo()$otherPkgs)),   # Unload add-on packages
-                 detach,
-                 character.only = TRUE, unload = TRUE))
-})
-```
-
 ```{r}
 library(tidyverse)
 library(densityClust)
@@ -61,6 +47,7 @@ taxonomy
 library(factoextra)
 fviz_nbclust(taxonomy[,c("pc1", "pc2", "pc3", "pc4")], kmeans, method = "gap_stat")
 ```
+
 ```{r}
 fviz_nbclust(taxonomy[,c("pc1", "pc2", "pc3", "pc4")], kmeans, method = "silhouette")
 ```
@@ -106,13 +93,13 @@ distribution <- dist(taxonomy[,c("pc1", "pc2", "pc3", "pc4")])
 clustered <- densityClust(distribution, gaussian=TRUE)
 plot(clustered)
 ```
+
 RHO - The threshold for local density when detecting cluster peaks
 Delta - The threshold for minimum distance to higher density when detecting cluster peaks
 ```{r}
 clusters <- findClusters(clustered, rho=0.2, delta=0.5)
 clusters
 ```
-
 
 ```{r}
 clusters_half <- findClusters(clustered, rho=0.2, delta=0.6)
@@ -148,122 +135,8 @@ results <- taxonomy[order(taxonomy$cluster, taxonomy$trophic_niche, taxonomy$for
 results
 ```
 
-###########################
- Test it out
-###########################
 
 ```{r}
-assign_clusters <- function(species) {
-  left_join(species, taxonomy)
-}
-```
-
-```{r}
-london <- read_csv("test_data_london.csv")
-london <- assign_clusters(london)
-london
-
-nrow(unique(london[,c("cluster")]))
-nrow(unique(london[,c("cluster", "trophic_niche", "foraging_niche")]))
-```
-
-```{r}
-test_locality_species_data <- read_csv('test_data_all_localities.csv')
-```
-
-```{r}
-london_test_localities <- unique(test_locality_species_data[test_locality_species_data$name == 'London', c("locality_id", "f0_")])
-london_test_localities
-```
-
-```{r}
-locality <- data.frame(test_locality_species_data[test_locality_species_data$locality_id == 'L10042193',])
-locality <- assign_clusters(locality)
-
-locality
-
-cluster_scores = nrow(unique(locality[,c("cluster", "trophic_niche", "foraging_niche")])) / nrow(unique(london[,c("cluster", "trophic_niche", "foraging_niche")]))
-
-cluster_scores
-```
-
-```{r}
-locallity_cluster_scores <- function(test_localities, regional_pool_clusters) {
-  test_localities$cluster_score <- 0
-  
-  for (row in 1:nrow(test_localities)) {
-    locality_id <- test_localities[row, "locality_id"]$locality_id
-    locality <- data.frame(test_locality_species_data[test_locality_species_data$locality_id == locality_id,])
-    locality <- assign_clusters(locality)
-    
-    test_localities$cluster_score[row] <- nrow(unique(locality[,c("cluster", "trophic_niche", "foraging_niche")])) / nrow(unique(london[,c("cluster", "trophic_niche", "foraging_niche")]))
-  }
-  
-  test_localities
-}
-```
-
-
-```{r}
-london_scores <- locallity_cluster_scores(london_test_localities, report_clusters(london))
-london_scores
-```
-
-```{r}
-colombo <- read_csv("test_data_colombo.csv")
-colombo <- assign_clusters(colombo)
-```
-
-```{r}
-colombo_test_localities <- unique(test_locality_species_data[test_locality_species_data$name == 'Colombo', c("locality_id", "f0_")])
-colombo_scores <- locallity_cluster_scores(colombo_test_localities, report_clusters(colombo))
-colombo_scores
-```
-
-```{r}
-bogota <- read_csv("test_data_bogota.csv")
-bogota <- assign_clusters(bogota)
-bogota_test_localities <- unique(test_locality_species_data[test_locality_species_data$name == 'Bogota', c("locality_id", "f0_")])
-bogota_scores <- locallity_cluster_scores(bogota_test_localities, report_clusters(bogota))
-bogota_scores
-```
-
-```{r}
-bangaluru <- read_csv("test_data_bangaluru.csv")
-bangaluru <- assign_clusters(bangaluru)
-bangaluru_test_localities <- unique(test_locality_species_data[test_locality_species_data$name == 'Bengaluru', c("locality_id", "f0_")])
-bangaluru_scores <- locallity_cluster_scores(bangaluru_test_localities, report_clusters(bangaluru))
-bangaluru_scores
-```
-
-```{r}
-vancouver <- read_csv("test_data_vancouver.csv")
-vancouver <- assign_clusters(vancouver)
-vancouver_test_localities <- unique(test_locality_species_data[test_locality_species_data$name == 'Vancouver', c("locality_id", "f0_")])
-vancouver_scores <- locallity_cluster_scores(vancouver_test_localities, report_clusters(vancouver))
-vancouver_scores
-```
-
-
-
-```{r}
-london_scores$city = 'London'
-colombo_scores$city = 'Colombo'
-bogota_scores$city = 'Bogota'
-bangaluru_scores$city = 'Bengaluru'
-vancouver_scores$city = 'Vancouver'
-
-localities_merged <- rbind(london_scores, colombo_scores, bogota_scores, bangaluru_scores, vancouver_scores)
-localities_merged
-```
-
-```{r}
-ggplot(localities_merged, aes(x = f0_, y = cluster_score * 100, colour = city)) + 
-         geom_point() + xlab("% SPP") + ylab("% clusters")
-```
-
-
-```{r}
-write_csv(taxonomy[,c("scientific_name", "cluster", "cluster_half", "cluster_double")], "result.csv")
+write_csv(taxonomy[,c("scientific_name", "cluster", "cluster_half", "cluster_double")], "taxonomic_trait_clusters.csv")
 ```
 
